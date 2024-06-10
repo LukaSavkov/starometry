@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package="github.com/c12s/metrics/pkg/external";
+package proto;
+
+
+message ExternalMetricData {
+    string metric_name = 1;
+    map<string, string> labels = 2;
+    double value = 3;
+    int64 timestamp = 4; 
+}
+
+message ExternalMetricsArray {
+    repeated ExternalMetricData metrics = 1;
+}
