@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option go_package="github.com/c12s/metrics/pkg/external";
+package proto;
+
+import "external_metrics_model.proto";
+
+service ExternalMetrics {
+    rpc ExternalLatestMetrics(ExternalLatestMetricsReq) returns (ExternalMetricsArray) {}
+}
+
+message ExternalLatestMetricsReq {}

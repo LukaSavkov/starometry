@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option go_package="github.com/c12s/metrics/pkg/api";
+package proto;
+
+
+message MetricData {
+    string metric_name = 1;
+    map<string, string> labels = 2;
+    double value = 3;
+    int64 timestamp = 4; 
+}
+
+message MetricsWithNodeID {
+    string node_id = 1;
+    repeated MetricData metrics = 2;
+}
+
+message NewMetricsArray {
+    repeated string metrics = 1;
+}
+
+message ExternalApplication {
+    string address = 1;
+  }
+  
+  message ExternalApplicationsList {
+    repeated ExternalApplication external_applications = 1;
+  }
+  

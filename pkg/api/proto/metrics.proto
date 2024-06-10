@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package="github.com/c12s/metrics/pkg/api";
+package proto;
+
+import "metrics_model.proto";
+
+service Metrics {
+    rpc PostNewMetrics(NewMetricsArray) returns(PostNewMetricsResp) {}
+    rpc GetLatestMetrics(GetLatestMetricsReq) returns (GetLatestMetricsResp) {}
+    rpc PostNewExternalApplicationsList(ExternalApplicationsList) returns(ExternalApplicationsList) {}
+}
+
+
+message PostNewMetricsResp {
+    MetricsWithNodeID data = 1;
+}
+
+message GetLatestMetricsReq {}
+
+message GetLatestMetricsResp {
+    MetricsWithNodeID data = 1;
+}
