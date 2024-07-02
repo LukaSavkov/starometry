@@ -36,7 +36,7 @@ func (ns NatsService) InitializeMetricsSubscriber() {
 	ns.natsConnection.Subscribe("getMetrics", func(msg *nats.Msg) {
 		writtenMetrics, err := ns.metricsService.GetLatestMetrics()
 		if err != nil {
-			log.Println(err)
+			log.Println("ERR IZ METRIKA", err)
 		}
 		jsonData, errFromCast := json.Marshal(writtenMetrics)
 		if errFromCast != nil {

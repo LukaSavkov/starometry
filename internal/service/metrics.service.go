@@ -1,9 +1,10 @@
 package service
 
 import (
-	"context"
 	"encoding/json"
+	"io"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -12,25 +13,25 @@ import (
 	"github.com/c12s/metrics/internal/models"
 	"github.com/c12s/metrics/internal/utils"
 
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
+	dto "github.com/prometheus/client_model/go"
+	"github.com/prometheus/common/expfmt"
 )
 
 type MetricsService struct {
-	prometheusAPI      v1.API
 	FileService        *LocalFileService
-	Query              string
 	QueryMetricsConfig *config.MetricsConfig
+	AppConfig          *config.AppConfig
 	NodeID             string
+	UsageMetrics       *models.UsageMetrics
 }
 
-func NewMetricsService(prometheusAPI v1.API, fileService *LocalFileService, query string, queryMetricsConfig *config.MetricsConfig, nodeID string) *MetricsService {
+func NewMetricsService(fileService *LocalFileService, queryMetricsConfig *config.MetricsConfig, nodeID string, appConfig *config.AppConfig) *MetricsService {
 	return &MetricsService{
-		prometheusAPI:      prometheusAPI,
 		FileService:        fileService,
-		Query:              query,
 		QueryMetricsConfig: queryMetricsConfig,
 		NodeID:             nodeID,
+		AppConfig:          appConfig,
+		UsageMetrics:       models.NewUsageMetrics(),
 	}
 }
 
@@ -79,18 +80,31 @@ func (m *MetricsService) WriteMetricsFromExternalApplication(metrics []models.Me
 	return nil
 }
 
-func (m *MetricsService) GetMetricsFromPrometheus() *errors.ErrorStruct {
-	queryResults, err := m.queryPrometheus()
+func (m *MetricsService) GetMetrics() *errors.ErrorStruct {
+	byteQueryResultsFromCAdvisor, err := m.SendExternalGetRequestToMetricsEndpoint(m.AppConfig.GetCAdvisorAddress())
 	if err != nil {
-		log.Println("Query results error", err.GetErrorMessage())
+		log.Println("Byte query result from cAdvisor", err.GetErrorMessage())
 		return err
 	}
-	fileFormat, err := m.getMetricsToFileWriteFormat(*queryResults)
+	actualMetricsValueFromCAdvisor, err := m.castResultsFromBytesToActualValue(byteQueryResultsFromCAdvisor, "cAdvisor")
 	if err != nil {
-		log.Println("File format error: ", err.GetErrorMessage())
 		return err
 	}
-	byteFormatOfMetrics, err := m.formatMetricsIntoByteArray(fileFormat)
+	byteQueryResultsFromNodeExporter, err := m.SendExternalGetRequestToMetricsEndpoint(m.AppConfig.GetNodeExporterAddress())
+	if err != nil {
+		log.Println("Byte query result from cAdvisor", err.GetErrorMessage())
+		return err
+	}
+	actualMetricsValueFromNodeExporter, err := m.castResultsFromBytesToActualValue(byteQueryResultsFromNodeExporter, "node-exporter")
+	if err != nil {
+		return err
+	}
+	mergedSlicesForMetrics := append(*actualMetricsValueFromCAdvisor, *actualMetricsValueFromNodeExporter...)
+	fileFormat := models.MetricFileFormat{
+		NodeId:  m.NodeID,
+		Metrics: mergedSlicesForMetrics,
+	}
+	byteFormatOfMetrics, err := m.formatMetricsIntoByteArray(&fileFormat)
 	if err != nil {
 		log.Fatalf("Error occurred during marshaling. Error: %s", err.GetErrorMessage())
 		return err
@@ -111,51 +125,65 @@ func (m *MetricsService) formatMetricsIntoByteArray(fileFormat *models.MetricFil
 	return jsonFileFormat, nil
 }
 
-func (m *MetricsService) queryPrometheus() (*model.Value, *errors.ErrorStruct) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+func (ms *MetricsService) castResultsFromBytesToActualValue(readedBytes []byte, resultsScrapedFrom string) (*[]models.MetricData, *errors.ErrorStruct) {
+	data := string(readedBytes)
 
-	result, warnings, err := m.prometheusAPI.Query(ctx, m.Query, time.Now())
+	parser := expfmt.TextParser{}
+	metrics, err := parser.TextToMetricFamilies(strings.NewReader(data))
 	if err != nil {
-		log.Println("Err while querying the prometheus ", err)
-		m.QueryMetricsConfig.SetQueries(config.Queries)
 		return nil, errors.NewError(err.Error(), 500)
 	}
-	if len(warnings) > 0 {
-		log.Printf("Prometheus query warnings: %v", warnings)
+	var parsedMetrics []models.MetricData
+	for _, mf := range metrics {
+		for _, m := range mf.Metric {
+			if _, exists := (*ms.QueryMetricsConfig.GetQueries())[*mf.Name]; exists {
+				metric := ms.createMetricData(*mf.Name, m)
+				parsedMetrics = append(parsedMetrics, metric)
+				ms.UsageMetrics.UpdateUsageMetrics(metric)
+			}
+		}
 	}
-	return &result, nil
+	if resultsScrapedFrom == "cAdvisor" {
+		parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromCAdvisor()...)
+	} else {
+		parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromNodeExporter()...)
+
+	}
+	return &parsedMetrics, nil
 }
 
-func (m *MetricsService) getMetricsToFileWriteFormat(val model.Value) (*models.MetricFileFormat, *errors.ErrorStruct) {
-	vector, ok := val.(model.Vector)
-	if !ok {
-		return nil, errors.NewError("Error: Expecting vector type from Prometheus response", 500)
+func (ms *MetricsService) createMetricData(metricName string, m *dto.Metric) models.MetricData {
+	metric := models.MetricData{
+		MetricName: metricName,
+		Labels:     make(map[string]string),
+		Value:      ms.getValue(m),
 	}
-	var metricsFileFormat models.MetricFileFormat
-	for _, sample := range vector {
-		data := models.MetricData{
-			MetricName: string(sample.Metric["__name__"]),
-			Labels:     make(map[string]string),
-			Value:      float64(sample.Value),
-			Timestamp:  int64(sample.Timestamp),
+	metric.Timestamp = time.Now().Unix()
+	for _, label := range m.Label {
+		if *label.Value == "" {
+			continue
 		}
-		for labelName, labelValue := range sample.Metric {
-			if labelName == "__name__" || labelName == "job" || labelName == "instance" {
-				continue
-			}
-			isDockerComposeLabel := strings.Contains(string(labelName), "container_label_com_docker_compose")
-			isAllowedDockerComposeLabel := labelName == "container_label_com_docker_compose_service" ||
-				labelName == "container_label_com_docker_compose_version" ||
-				labelName == "container_label_com_docker_compose_project"
+		metric.Labels[*label.Name] = *label.Value
+	}
+	return metric
+}
 
-			if !isDockerComposeLabel || isAllowedDockerComposeLabel {
-				data.Labels[string(labelName)] = string(labelValue)
-			}
-		}
-		metricsFileFormat.Metrics = append(metricsFileFormat.Metrics, data)
+func (m *MetricsService) getValue(passedValue *dto.Metric) float64 {
+	if passedValue.Gauge != nil {
+		return *passedValue.Gauge.Value
+	} else if passedValue.Counter != nil {
+		return *passedValue.Counter.Value
+	} else if passedValue.Untyped != nil {
+		return *passedValue.Untyped.Value
 	}
-	return &metricsFileFormat, nil
+	return 0
+}
+
+func (m *MetricsService) getMetricsToFileWriteFormat(data *[]models.MetricData) (*models.MetricFileFormat, *errors.ErrorStruct) {
+	return &models.MetricFileFormat{
+		NodeId:  m.NodeID,
+		Metrics: *data,
+	}, nil
 }
 
 func (m *MetricsService) formatMetricsFromByteArray(data []byte) (*models.MetricFileFormat, *errors.ErrorStruct) {
@@ -168,58 +196,26 @@ func (m *MetricsService) formatMetricsFromByteArray(data []byte) (*models.Metric
 }
 
 func (m *MetricsService) ReloadQuery(newMetrics []string) *errors.ErrorStruct {
-	m.QueryMetricsConfig.SetQueries(newMetrics)
-	m.Query = utils.ConvertFromStringArrayToPromQLQuery(*m.QueryMetricsConfig.GetQueries())
-	err := m.GetMetricsFromPrometheus()
+	castedMetricsIntoProperMapStructure := utils.ConvertFromStringArrayToMapStringStruct(newMetrics)
+	m.QueryMetricsConfig.AppendNewMetricsToDefaultMap(castedMetricsIntoProperMapStructure)
+	log.Println(m.QueryMetricsConfig.GetQueries())
+	err := m.GetMetrics()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *MetricsService) queryPrometheusWithRetry(retries int, delay time.Duration) (*model.Value, *errors.ErrorStruct) {
-	var queryResults *model.Value
-	var err *errors.ErrorStruct
-	for i := 0; i < retries; i++ {
-		queryResults, err = m.queryPrometheus()
-		if err == nil {
-			log.Printf("Attempt %d succeed.", i+1)
-			return queryResults, nil
-		}
-		log.Printf("Attempt %d failed: %s. Retrying in %v...", i+1, err.GetErrorMessage(), delay)
-		time.Sleep(delay)
-	}
-	log.Printf("All attempts failed. Last error: %s", err.GetErrorMessage())
-	return nil, err
-}
-
-func (m *MetricsService) GetInitialMetricsFromPrometheusOnApplicationInit() *errors.ErrorStruct {
-	retries := 3
-	delay := 2 * time.Second
-
-	queryResults, err := m.queryPrometheusWithRetry(retries, delay)
+func (ms MetricsService) SendExternalGetRequestToMetricsEndpoint(url string) ([]byte, *errors.ErrorStruct) {
+	response, err := http.Get("http://" + url + "/metrics")
 	if err != nil {
-		log.Printf("Query results error: %s", err.GetErrorMessage())
-		return err
+		return nil, errors.NewError(err.Error(), 500)
 	}
+	defer response.Body.Close()
 
-	fileFormat, err := m.getMetricsToFileWriteFormat(*queryResults)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Printf("File format error: %s", err.GetErrorMessage())
-		return err
+		return nil, errors.NewError(err.Error(), 500)
 	}
-
-	byteFormatOfMetrics, err := m.formatMetricsIntoByteArray(fileFormat)
-	if err != nil {
-		log.Fatalf("Error occurred during marshaling: %s", err.GetErrorMessage())
-		return err
-	}
-
-	errorFromWrite := m.FileService.WriteToFile("data/scraped-metrics.json", byteFormatOfMetrics)
-	if errorFromWrite != nil {
-		log.Fatalf("Error occurred during writing to file: %s", errorFromWrite.Error())
-		return errors.NewError(errorFromWrite.Error(), 500)
-	}
-
-	return nil
+	return body, nil
 }
