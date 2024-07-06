@@ -8,40 +8,57 @@ import (
 	"github.com/c12s/metrics/internal/utils"
 )
 
-var Queries = []string{
-	"container_cpu_usage_seconds_total",
-	"container_memory_usage_bytes",
-	"container_network_receive_bytes_total",
-	"container_network_transmit_bytes_total",
-	"container_fs_usage_bytes",
-	"container_fs_writes_bytes_total",
-	"container_fs_reads_bytes_total",
-	"container_start_time_seconds",
-	"container_tasks_state",
-	"node_cpu_seconds_total",
-	"node_memory_MemAvailable_bytes",
-	"node_disk_io_time_seconds_total",
-	"node_disk_read_bytes_total",
-	"node_disk_written_bytes_total",
-	"node_network_receive_bytes_total",
-	"node_network_transmit_bytes_total",
-	"node_filesystem_avail_bytes",
-	"node_filesystem_size_bytes",
-	"node_load1",
-	"node_load5",
-	"node_load15",
-}
+// var Queries = []string{
+// 	"container_cpu_usage_seconds_total",
+// 	"container_memory_usage_bytes",
+// 	"container_network_receive_bytes_total",
+// 	"container_network_transmit_bytes_total",
+// 	"container_fs_usage_bytes",
+// 	"container_fs_writes_bytes_total",
+// 	"container_fs_reads_bytes_total",
+// 	"container_start_time_seconds",
+// 	"container_tasks_state",
+// 	"node_cpu_seconds_total",
+// 	"node_memory_MemAvailable_bytes",
+// 	"node_disk_io_time_seconds_total",
+// 	"node_disk_read_bytes_total",
+// 	"node_disk_written_bytes_total",
+// 	"node_network_receive_bytes_total",
+// 	"node_network_transmit_bytes_total",
+// 	"node_filesystem_avail_bytes",
+// 	"node_filesystem_size_bytes",
+// 	"node_load1",
+// 	"node_load5",
+// 	"node_load15",
+// }
 
+var Queries = map[string]struct{}{
+	"container_cpu_usage_seconds_total":      {},
+	"container_spec_cpu_quota":               {},
+	"container_memory_usage_bytes":           {},
+	"container_spec_memory_limit_bytes":      {},
+	"container_fs_usage_bytes":               {},
+	"container_spec_cpu_period":              {},
+	"container_network_receive_bytes_total":  {},
+	"container_network_transmit_bytes_total": {},
+	"node_cpu_seconds_total":                 {},
+	"node_memory_MemTotal_bytes":             {},
+	"node_memory_MemAvailable_bytes":         {},
+	"node_filesystem_size_bytes":             {},
+	"node_filesystem_free_bytes":             {},
+	"node_network_receive_bytes_total":       {},
+	"node_network_transmit_bytes_total":      {},
+}
 var basicCronTimerForScrapingMetrics = "45s"
 var basicCronTimerForScrapingExternalMetrics = "30s"
 
 type MetricsConfig struct {
-	queries              []string
+	queries              map[string]struct{}
 	cronTimer            string
 	externalAppCronTimer string
 }
 
-func (mc *MetricsConfig) GetQueries() *[]string {
+func (mc *MetricsConfig) GetQueries() *map[string]struct{} {
 	return &mc.queries
 }
 
@@ -49,7 +66,7 @@ func (mc *MetricsConfig) GetCronTimer() string {
 	return mc.cronTimer
 }
 
-func (mc *MetricsConfig) SetQueries(queries []string) {
+func (mc *MetricsConfig) SetQueries(queries map[string]struct{}) {
 	mc.queries = queries
 }
 
@@ -60,6 +77,14 @@ func (mc *MetricsConfig) SetCronTimer(cronTimer string) {
 func (mc *MetricsConfig) GetExternalCronTimer() string {
 	return mc.externalAppCronTimer
 }
+
+func (mc *MetricsConfig) AppendNewMetricsToDefaultMap(newMetrics map[string]struct{}) {
+	mc.queries = Queries
+	for k, v := range newMetrics {
+		mc.queries[k] = v
+	}
+}
+
 func NewMetricsConfigWithPresetConfiguration() *MetricsConfig {
 	return &MetricsConfig{
 		queries:              Queries,
@@ -76,11 +101,11 @@ func NewMetricsConfigLoadedFromEnv() (*MetricsConfig, error) {
 		fmt.Println("Queries or crone timers are not up")
 		return nil, errors.ErrUnsupported
 	}
-	var queriesArray []string
+	var queriesToSet map[string]struct{}
 	if queriesFromENV != "" {
-		queriesArray = utils.ConvertFromCSVToStringArray(os.Getenv("APP_METRICS_CONFIG"))
+		queriesToSet = utils.ConvertFromCSVToMapStringStruct(os.Getenv("APP_METRICS_CONFIG"))
 	} else {
-		queriesArray = Queries
+		queriesToSet = Queries
 	}
 	if cronTimer == "" {
 		cronTimer = basicCronTimerForScrapingMetrics
@@ -89,7 +114,7 @@ func NewMetricsConfigLoadedFromEnv() (*MetricsConfig, error) {
 		externalAppCronTimer = basicCronTimerForScrapingExternalMetrics
 	}
 	return &MetricsConfig{
-		queries:              queriesArray,
+		queries:              queriesToSet,
 		cronTimer:            cronTimer,
 		externalAppCronTimer: externalAppCronTimer,
 	}, nil

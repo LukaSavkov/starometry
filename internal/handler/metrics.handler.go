@@ -22,7 +22,7 @@ func NewMetricsHandler(metricsService *service.MetricsService) *MetricsHandler {
 }
 
 func (mh MetricsHandler) Test(rw http.ResponseWriter, h *http.Request) {
-	mh.metricsService.GetMetricsFromPrometheus()
+	mh.metricsService.GetMetrics()
 	utils.WriteResp("OK", 200, rw)
 }
 

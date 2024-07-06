@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 
 	"github.com/c12s/metrics/internal/config"
 	"github.com/c12s/metrics/internal/handler"
@@ -14,12 +13,9 @@ import (
 	"github.com/c12s/metrics/internal/models"
 	"github.com/c12s/metrics/internal/servers"
 	"github.com/c12s/metrics/internal/service"
-	"github.com/c12s/metrics/internal/utils"
 
 	pkgAPI "github.com/c12s/metrics/pkg/api"
 	"github.com/c12s/metrics/pkg/external"
-	"github.com/prometheus/client_golang/api"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"google.golang.org/grpc"
 )
 
@@ -53,19 +49,9 @@ func NewApp() (*App, error) {
 
 func (app *App) init() {
 	app.externalApplicationsConfig = config.NewExternalApplicationsConfig()
-	client, err := api.NewClient(
-		api.Config{
-			Address: "http://" + app.appConfig.GetPrometheusAddress(),
-		},
-	)
-	if err != nil {
-		fmt.Println("Error creating Prometheus client: ", err)
-		os.Exit(1)
-	}
-	api := v1.NewAPI(client)
 	fileService := service.NewLocalFileService()
 	app.initializeNodeID(fileService)
-	metricsService := service.NewMetricsService(api, fileService, utils.ConvertFromStringArrayToPromQLQuery(*app.metricsConfig.GetQueries()), app.metricsConfig, app.appConfig.GetNodeID())
+	metricsService := service.NewMetricsService(fileService, app.metricsConfig, app.appConfig.GetNodeID(), app.appConfig)
 	natsService, err := service.NewNatsService(app.appConfig.GetNatsAddress(), metricsService)
 	if err != nil {
 		log.Println(err)
@@ -80,7 +66,7 @@ func (app *App) init() {
 	natsService.InitializeMetricsSubscriber()
 	metricsHandler := handler.NewMetricsHandler(metricsService)
 	cronService.AddJob("@every "+app.metricsConfig.GetCronTimer(), func() {
-		metricsService.GetMetricsFromPrometheus()
+		metricsService.GetMetrics()
 		log.Println(app.metricsConfig.GetQueries())
 	})
 	cronService.AddJob("@every "+app.metricsConfig.GetExternalCronTimer(), func() {
@@ -99,7 +85,7 @@ func (app *App) init() {
 		metricsService.WriteMetricsFromExternalApplication(metrics)
 	})
 	cronService.Start()
-	metricsService.GetInitialMetricsFromPrometheusOnApplicationInit()
+	metricsService.GetMetrics()
 
 	// servers
 	customHttpServer := servers.NewHttpServer(metricsHandler)

@@ -3,20 +3,22 @@ package config
 import "os"
 
 type AppConfig struct {
-	serverPort     string
-	prometheusAddr string
-	natsAddr       string
-	grpcPort       string
-	nodeID         string
+	serverPort       string
+	nodeExporterAddr string
+	cAdvisorAddr     string
+	natsAddr         string
+	grpcPort         string
+	nodeID           string
 }
 
 func NewAppConfigFromEnv() *AppConfig {
 	return &AppConfig{
-		serverPort:     os.Getenv("APP_PORT"),
-		prometheusAddr: os.Getenv("PROMETHEUS_URL") + ":" + os.Getenv("PROMETHEUS_PORT"),
-		natsAddr:       os.Getenv("NATS_URL") + ":" + os.Getenv("NATS_PORT"),
-		grpcPort:       os.Getenv("GRPC_PORT"),
-		nodeID:         "",
+		serverPort:       os.Getenv("APP_PORT"),
+		nodeExporterAddr: os.Getenv("NODE_EXPORTER_URL") + ":" + os.Getenv("NODE_EXPORTER_PORT"),
+		cAdvisorAddr:     os.Getenv("CADVISOR_URL") + ":" + os.Getenv("CADVISOR_PORT"),
+		natsAddr:         os.Getenv("NATS_URL") + ":" + os.Getenv("NATS_PORT"),
+		grpcPort:         os.Getenv("GRPC_PORT"),
+		nodeID:           "",
 	}
 }
 
@@ -24,8 +26,12 @@ func (ap *AppConfig) GetServerPort() string {
 	return ap.serverPort
 }
 
-func (ap *AppConfig) GetPrometheusAddress() string {
-	return ap.prometheusAddr
+func (ap *AppConfig) GetNodeExporterAddress() string {
+	return ap.nodeExporterAddr
+}
+
+func (ap *AppConfig) GetCAdvisorAddress() string {
+	return ap.cAdvisorAddr
 }
 
 func (ap *AppConfig) GetNatsAddress() string {
