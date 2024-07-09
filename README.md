@@ -2,7 +2,7 @@
 
 Starometry is a service designed for the collection and management of metrics for the c12s platform. This service gathers metrics from cAdvisor and node-exporter, enabling real-time monitoring of both machine states and virtualized Docker containers running on the machine.
 
-### Configuration
+## Configuration
 
 Starometry supports two types of configurations that can be provided via environment variables. The first type pertains to the application itself, while the second type is related to the metrics.
 
@@ -26,3 +26,68 @@ Starometry supports two types of configurations that can be provided via environ
 | APP_METRICS_CONFIG              | List of metrics that you want to scrape from cAdvisor or node-exporter, separated as CSV.                                                                                                      | Link to default list of metrics |
 | APP_METRICS_CRON_TIMER          | Value for the cron job timer that defines how often the scrape for metrics will be executed. It is important to note that you must add 's' for seconds or 'm' for minutes at the end.          | 45s                             |
 | APP_METRICS_EXTERNAL_CRON_TIMER | Value for the cron job timer that defines how often the scrape for external metrics will be executed. It is important to note that you must add 's' for seconds or 'm' for minutes at the end. | 45s                             |
+
+Small example of APP_METRICS_CONFIG would be: container_cpu_usage_seconds_total,container_spec_cpu_quota
+
+## Usage
+
+The Starometry for HTTP requests is, by default, available at [http://localhost:8003](http://localhost:8003). It can be accessed via any tool that allows you to send HTTP requests. For each instance, just add +1 to the port number.
+
+The Starometry for gRPC requests is, by default, available at [127.0.0.1:50055](127.0.0.1:50055). For each instance of Starometry, just add +1 to the port number. Refer to the [start.sh](https://github.com/c12s/tools/blob/master/start.sh) for more information.
+
+## Endpoints
+
+There is two types of endpoints: gRPC and HTTP.
+
+### HTTP Endpoints
+
+#### Base HTTP Response
+
+```json
+{
+  "status": 200,
+  "data": {}
+}
+```
+
+#### Base Error HTTP Response
+
+```json
+{
+  "status": 400,
+  "path": "path",
+  "time": "2024-07-09",
+  "error": "Error"
+}
+```
+
+#### GET /latest
+
+The endpoint for reading latest written metrics.
+
+##### Request headers
+
+None
+
+#### Request body
+
+None
+
+#### Response - 200 OK
+
+```json
+{
+  "nodeId": "e984c7e0-0f83-4870-81e7-0424595c90a5",
+  "metrics": [
+    {
+      "metric_name": "container_network_transmit_bytes_total",
+      "labels": {
+        "id": "/",
+        "interface": "br-0758707fa6ae"
+      },
+      "value": 22096194,
+      "timestamp": 1720546066
+    }
+  ]
+}
+```
