@@ -6,7 +6,7 @@ Starometry is a service designed for the collection and management of metrics fo
 
 Starometry supports two types of configurations that can be provided via environment variables. The first type pertains to the application itself, while the second type is related to the metrics.
 
-##### Application configuration
+### Application configuration
 
 | Parameter          | Description                                                                                                                                                                                 | Default value |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -19,7 +19,7 @@ Starometry supports two types of configurations that can be provided via environ
 | NATS_URL           | The address without the port that allows Starometry to communicate with the NATS running on the Control Plane                                                                               | nats          |
 | NATS_PORT          | The port at which the Nats is running.                                                                                                                                                      | 4222          |
 
-##### Metrics configuration
+### Metrics configuration
 
 | Parameter                       | Description                                                                                                                                                                                    | Default value                   |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
