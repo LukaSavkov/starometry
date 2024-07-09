@@ -208,4 +208,73 @@ The endpoint for adding new addresses for external applications.
 }
 ```
 
+## Default Metrics
+
+Metrics listed below are must have and always included.
+
+1. container_cpu_usage_seconds_total:
+    - **Description**: Total cumulative CPU usage of the container.
+    - **Details**: Measures the total CPU time consumed by the container in seconds. This includes both user and system CPU time.
+2. container_spec_cpu_quota:
+    - **Description**: CPU quota limit set for the container.
+    - **Details**: Indicates the maximum amount of CPU time that the container can use during a given period. This is specified in microseconds.
+3. container_memory_usage_bytes:
+    - **Description**: Current memory usage of the container.
+    - **Details**: Shows the total memory usage in bytes, including all memory required by the container's processes, cache, and buffers.
+4. container_spec_memory_limit_bytes:
+    - **Description**: Memory limit set for the container.
+    - **Details**: Specifies the maximum amount of memory the container is allowed to use, in bytes.
+5. container_fs_usage_bytes:
+    - **Description**: File system usage by the container.
+    - **Details**: Represents the total disk space used by the container's filesystem, in bytes.
+6. container_spec_cpu_period:
+    - **Description**: CPU period for container scheduling.
+    - **Details**: Defines the length of the time period in microseconds for CPU allocation, used in conjunction with container_spec_cpu_quota to control CPU resource allocation.
+7. container_network_receive_bytes_total:
+    - **Description**: Total bytes received by the container.
+    - **Details**: Measures the total number of bytes received over the network interfaces of the container.
+8. container_network_transmit_bytes_total:
+    - **Description**: Total bytes transmitted by the container.
+    - **Details**: Measures the total number of bytes sent over the network interfaces of the container.
+9. node_cpu_seconds_total:
+    - **Description**: Total CPU usage of the node.
+    - **Details**: Represents the cumulative CPU time used by all processes on the node, in seconds.
+10. node_memory_MemTotal_bytes:
+    - **Description**: Total memory available on the node.
+    - **Details**: Shows the total amount of physical memory (RAM) available on the node, in bytes.
+11. node_memory_MemAvailable_bytes:
+    - **Description**: Available memory on the node.
+    - **Details**: Indicates the amount of memory that is available for use by processes on the node, in bytes. This includes free memory and reclaimable memory from caches and buffers.
+12. node_filesystem_size_bytes:
+    - **Description**: Total size of the node's filesystem.
+    - **Details**: Represents the total capacity of the node's filesystem, in bytes.
+13. node_filesystem_free_bytes:
+    - **Description**: Free space in the node's filesystem.
+    - **Details**: Indicates the amount of unused space in the node's filesystem, in bytes.
+14. node_network_receive_bytes_total:
+    - **Description**: Total bytes received by the node.
+    - **Details**: Measures the total number of bytes received over all network interfaces on the node.
+15. node_network_transmit_bytes_total:
+    - **Description**: Total bytes transmitted by the node.
+    - **Details**: Measures the total number of bytes sent over all network interfaces on the node.
+
+## Custom Metrics that gets created in Starometry
+Some metrics are calculated and categorized as custom. There are two types of categories: calculated for containers and calculated for nodes
+
+##### Node metrics
+
+1. custom_node_cpu_usage_percentage
+2. custom_node_ram_available_mb
+3. custom_node_ram_total_mb
+4. custom_node_disk_usage_gb
+5. custom_node_disk_total_gb
+6. custom_node_network_receieve_mb
+7. custom_node_network_transmit_mb
+
+##### Service (containers) metrics
+1. custom_service_cpu_usage
+2. custom_service_ram_usage_mb
+3. custom_service_disk_usage_mb
+4. custom_service_network_receive_mb
+5. custom_service_network_transmit_mb
 
