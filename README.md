@@ -32,8 +32,10 @@ The Starometry for HTTP requests is, by default, available at [http://localhost:
 The Starometry for gRPC requests is, by default, available at [127.0.0.1:50055](127.0.0.1:50055). For each instance of Starometry, just add +1 to the port number. Refer to the [start.sh](https://github.com/c12s/tools/blob/master/start.sh) for more information.
 
 ## Endpoints
-There is two types of endpoints: gRPC and HTTP.
+There are two types of endpoints: gRPC and HTTP.
+
 ### HTTP Endpoints
+
 #### Base HTTP Response
 ```json
 {
@@ -258,8 +260,8 @@ Metrics listed below are must have and always included.
     - **Description**: Total bytes transmitted by the node.
     - **Details**: Measures the total number of bytes sent over all network interfaces on the node.
 
-## Custom Metrics that gets created in Starometry
-Some metrics are calculated and categorized as custom. There are two types of categories: calculated for containers and calculated for nodes
+## Custom metrics that get created in Starometry
+Some metrics are calculated and categorized as custom. There are two types of categories: calculated for containers and calculated for nodes.
 
 ##### Node metrics
 
@@ -278,3 +280,7 @@ Some metrics are calculated and categorized as custom. There are two types of ca
 4. custom_service_network_receive_mb
 5. custom_service_network_transmit_mb
 
+
+## Nats communication
+
+Starometry communicates with the Healthcheck service from Protostar via NATS, where Starometry sends the latest scraped metrics to the Healthcheck.
