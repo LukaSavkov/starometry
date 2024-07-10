@@ -10,7 +10,7 @@ Starometry supports two types of configurations that can be provided via environ
 |--|--|--|
 | APP_PORT | The port number at which the Starometry HTTP server is listening. If there are multiple Starometry agents running, each of them will be assigned a port number starting from APP_PORT + 1. | 8003 |
 | GRPC_PORT | The port number at which the Starometry GRPC server is listening. If there are multiple Starometry agents running, each of them will be assigned a port number starting from GRPC_PORT + 1. | 50055 |
-| NODE_EXPORTER_URL | The address without the port that allows Starometry to communicate with the node-exporter running on the same node. |
+| NODE_EXPORTER_URL | The address without the port that allows Starometry to communicate with the node-exporter running on the same node. | node_exporter |
 | NODE_EXPORTER_PORT | The port at which the node exporter is running. | 9100 |
 | CADVISOR_URL | The address without the port that allows Starometry to communicate with the cAdvisor running on the same node. | cadvisor |
 | CADVISOR_PORT | The port at which the cAdvisor is running. | 8081 |
@@ -20,11 +20,11 @@ Starometry supports two types of configurations that can be provided via environ
 ### Metrics configuration
 | Parameter | Description | Default value |
 |--|--|--|
-| APP_METRICS_CONFIG | List of metrics that you want to scrape from cAdvisor or node-exporter, separated as CSV. | Link to default list of metrics |
+| APP_METRICS_CONFIG | List of metrics that you want to scrape from cAdvisor or node-exporter, separated as CSV. | [Link to default list of metrics](#default-metrics) |
 | APP_METRICS_CRON_TIMER | Value for the cron job timer that defines how often the scrape for metrics will be executed. It is important to note that you must add 's' for seconds or 'm' for minutes at the end. | 45s |
 | APP_METRICS_EXTERNAL_CRON_TIMER | Value for the cron job timer that defines how often the scrape for external metrics will be executed. It is important to note that you must add 's' for seconds or 'm' for minutes at the end. | 45s |
 
-Small example of APP_METRICS_CONFIG would be: container_cpu_usage_seconds_total,container_spec_cpu_quota
+Small example of `APP_METRICS_CONFIG` would be: `container_cpu_usage_seconds_total,container_spec_cpu_quota`
 ## Usage
 
 The Starometry for HTTP requests is, by default, available at [http://localhost:8003](http://localhost:8003). It can be accessed via any tool that allows you to send HTTP requests. For each instance, just add +1 to the port number.
@@ -195,7 +195,7 @@ The endpoint for adding new addresses for external applications.
 |property| type  |                    description                      |
 |-----|-----|----|
 | `external_applications`    | array of applications-url objects | Array of applications-url. |
-| `address`    | string  | String value of URL. |
+| `address`    | string  | String value of the URL. |
 
 
 #### Response - 0 OK
@@ -210,7 +210,7 @@ The endpoint for adding new addresses for external applications.
 }
 ```
 
-## Default Metrics
+## Default Metrics(#default-metrics)
 
 Metrics listed below are must have and always included.
 
@@ -261,7 +261,7 @@ Metrics listed below are must have and always included.
     - **Details**: Measures the total number of bytes sent over all network interfaces on the node.
 
 ## Custom metrics that get created in Starometry
-Some metrics are calculated and categorized as custom. There are two types of categories: calculated for containers and calculated for nodes.
+Some metrics are calculated and categorized as custom. There are two types of categories: those calculated for containers and those calculated for nodes.
 
 ##### Node metrics
 
