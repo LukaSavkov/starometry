@@ -48,6 +48,7 @@ var Queries = map[string]struct{}{
 	"node_filesystem_free_bytes":             {},
 	"node_network_receive_bytes_total":       {},
 	"node_network_transmit_bytes_total":      {},
+	"machine_cpu_cores":                      {},
 }
 var basicCronTimerForScrapingMetrics = "15s"
 var basicCronTimerForScrapingExternalMetrics = "30s"
