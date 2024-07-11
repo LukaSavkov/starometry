@@ -59,6 +59,11 @@ func (m *MetricsService) GetLatestMetrics() (*models.MetricFileFormat, *errors.E
 		metrics.Metrics = append(metrics.Metrics, metricsExternal.Metrics...)
 	}
 	metrics.NodeId = m.NodeID
+	clusterId, err := m.FileService.ReadFromFile("/etc/c12s/clusterid")
+	if err != nil {
+		log.Println(err)
+	}
+	metrics.ClusterId = string(clusterId)
 	return metrics, nil
 }
 
