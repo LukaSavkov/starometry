@@ -49,7 +49,7 @@ var Queries = map[string]struct{}{
 	"node_network_receive_bytes_total":       {},
 	"node_network_transmit_bytes_total":      {},
 }
-var basicCronTimerForScrapingMetrics = "45s"
+var basicCronTimerForScrapingMetrics = "15s"
 var basicCronTimerForScrapingExternalMetrics = "30s"
 
 type MetricsConfig struct {

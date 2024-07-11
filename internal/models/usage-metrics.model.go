@@ -82,17 +82,17 @@ func (um *UsageMetrics) UpdateUsageMetrics(metric MetricData) {
 			um.ActiveServices[metricName] = serviceMetrics
 		}
 	case "container_network_receive_bytes_total":
-		if metric.Labels["name"] != "" && metric.Labels["interface"] == "eth0" {
+		if metric.Labels["name"] != "" {
 			metricName := metric.Labels["name"]
 			serviceMetrics := um.ActiveServices[metricName]
-			serviceMetrics.NetworkReceive = metric.Value
+			serviceMetrics.NetworkReceive += metric.Value
 			um.ActiveServices[metricName] = serviceMetrics
 		}
 	case "container_network_transmit_bytes_total":
-		if metric.Labels["name"] != "" && metric.Labels["interface"] == "eth0" {
+		if metric.Labels["name"] != "" {
 			metricName := metric.Labels["name"]
 			serviceMetrics := um.ActiveServices[metricName]
-			serviceMetrics.NetworkTransmit = metric.Value
+			serviceMetrics.NetworkTransmit += metric.Value
 			um.ActiveServices[metricName] = serviceMetrics
 		}
 	case "node_cpu_seconds_total":
@@ -120,13 +120,9 @@ func (um *UsageMetrics) UpdateUsageMetrics(metric MetricData) {
 		}
 
 	case "node_network_receive_bytes_total":
-		if metric.Labels["device"] == "eth0" {
-			um.nodeNetworkReceive = metric.Value
-		}
+		um.nodeNetworkReceive += metric.Value
 	case "node_network_transmit_bytes_total":
-		if metric.Labels["device"] == "eth0" {
-			um.nodeNetworkTransmit = metric.Value
-		}
+		um.nodeNetworkTransmit += metric.Value
 	}
 
 }
