@@ -33,7 +33,8 @@ func (ns *NatsService) Disconnect() {
 }
 
 func (ns NatsService) InitializeMetricsSubscriber() {
-	ns.natsConnection.Subscribe("getMetrics", func(msg *nats.Msg) {
+	subject := fmt.Sprintf("%s.metrics", ns.metricsService.NodeID)
+	ns.natsConnection.Subscribe(subject, func(msg *nats.Msg) {
 		writtenMetrics, err := ns.metricsService.GetLatestMetrics()
 		if err != nil {
 			log.Println("ERR IZ METRIKA", err)
@@ -47,6 +48,6 @@ func (ns NatsService) InitializeMetricsSubscriber() {
 
 }
 
-func (ns NatsService) TestPublish() {
-	ns.natsConnection.Publish("getMetrics", nil)
-}
+// func (ns NatsService) TestPublish() {
+// 	ns.natsConnection.Publish("getMetrics", nil)
+// }
