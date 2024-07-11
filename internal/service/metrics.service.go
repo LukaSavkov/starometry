@@ -64,13 +64,22 @@ func (m *MetricsService) GetLatestMetrics() (*models.MetricFileFormat, *errors.E
 		log.Println(err)
 	}
 	metrics.ClusterId = string(clusterId)
+	log.Println(m.NodeID)
+	log.Println(clusterId)
+	log.Println(metrics.NodeId)
+	log.Println(metrics.ClusterId)
 	return metrics, nil
 }
 
 func (m *MetricsService) WriteMetricsFromExternalApplication(metrics []models.MetricData) *errors.ErrorStruct {
+	clusterId, err := m.FileService.ReadFromFile("/etc/c12s/clusterid")
+	if err != nil {
+		log.Println(err)
+	}
 	fileFormat := &models.MetricFileFormat{
-		Metrics: metrics,
-		NodeId:  m.NodeID,
+		Metrics:   metrics,
+		NodeId:    m.NodeID,
+		ClusterId: string(clusterId),
 	}
 	byteFormatOfMetrics, err := m.formatMetricsIntoByteArray(fileFormat)
 	if err != nil {
@@ -105,9 +114,14 @@ func (m *MetricsService) GetMetrics() *errors.ErrorStruct {
 		return err
 	}
 	mergedSlicesForMetrics := append(*actualMetricsValueFromCAdvisor, *actualMetricsValueFromNodeExporter...)
+	clusterId, err := m.FileService.ReadFromFile("/etc/c12s/clusterid")
+	if err != nil {
+		log.Println(err)
+	}
 	fileFormat := models.MetricFileFormat{
-		NodeId:  m.NodeID,
-		Metrics: mergedSlicesForMetrics,
+		NodeId:    m.NodeID,
+		ClusterId: string(clusterId),
+		Metrics:   mergedSlicesForMetrics,
 	}
 	byteFormatOfMetrics, err := m.formatMetricsIntoByteArray(&fileFormat)
 	if err != nil {
