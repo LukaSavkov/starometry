@@ -155,16 +155,16 @@ func (ms *MetricsService) castResultsFromBytesToActualValue(readedBytes []byte, 
 			// if m.Histogram == nil && m.Untyped == nil {
 			metric := ms.createMetricData(*mf.Name, m)
 			parsedMetrics = append(parsedMetrics, metric)
-			// ms.UsageMetrics.UpdateUsageMetrics(metric)
+			ms.UsageMetrics.UpdateUsageMetrics(metric)
 			// }
 			// }
 		}
 	}
-	// if resultsScrapedFrom == "cAdvisor" {
-	// 	parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromCAdvisor()...)
-	// } else {
-	// 	parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromNodeExporter()...)
-	// }
+	if resultsScrapedFrom == "cAdvisor" {
+		parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromCAdvisor()...)
+	} else {
+		parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromNodeExporter()...)
+	}
 	return &parsedMetrics, nil
 }
 
@@ -176,9 +176,9 @@ func (ms *MetricsService) createMetricData(metricName string, m *dto.Metric) mod
 	}
 	metric.Timestamp = time.Now().Unix()
 	for _, label := range m.Label {
-		// if *label.Value == "" {
-		// 	continue
-		// }
+		if *label.Value == "" {
+			continue
+		}
 		metric.Labels[*label.Name] = *label.Value
 	}
 	return metric
