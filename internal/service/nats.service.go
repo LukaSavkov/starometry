@@ -46,7 +46,8 @@ func (ns NatsService) InitializeMetricsSubscriber() {
 			log.Println(errFromCast)
 		}
 		log.Println("NATS REQUEST FINISH MARSHAL")
-		msg.Respond([]byte(jsonData))
+		err2 := msg.Respond([]byte(jsonData))
+		log.Println(err2)
 		log.Println("NATS REQUEST FINISH")
 	})
 
