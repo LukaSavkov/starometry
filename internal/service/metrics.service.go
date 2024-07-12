@@ -155,11 +155,11 @@ func (ms *MetricsService) castResultsFromBytesToActualValue(readedBytes []byte, 
 	var parsedMetrics []models.MetricData
 	for _, mf := range metrics {
 		for _, m := range mf.Metric {
-			if _, exists := (*ms.QueryMetricsConfig.GetQueries())[*mf.Name]; exists {
-				metric := ms.createMetricData(*mf.Name, m)
-				parsedMetrics = append(parsedMetrics, metric)
-				ms.UsageMetrics.UpdateUsageMetrics(metric)
-			}
+			// if _, exists := (*ms.QueryMetricsConfig.GetQueries())[*mf.Name]; exists {
+			metric := ms.createMetricData(*mf.Name, m)
+			parsedMetrics = append(parsedMetrics, metric)
+			ms.UsageMetrics.UpdateUsageMetrics(metric)
+			// }
 		}
 	}
 	if resultsScrapedFrom == "cAdvisor" {
