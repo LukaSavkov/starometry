@@ -155,17 +155,16 @@ func (ms *MetricsService) castResultsFromBytesToActualValue(readedBytes []byte, 
 			if m.Histogram == nil && m.Untyped == nil {
 				metric := ms.createMetricData(*mf.Name, m)
 				parsedMetrics = append(parsedMetrics, metric)
-				ms.UsageMetrics.UpdateUsageMetrics(metric)
+				// ms.UsageMetrics.UpdateUsageMetrics(metric)
 			}
 			// }
 		}
 	}
-	if resultsScrapedFrom == "cAdvisor" {
-		parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromCAdvisor()...)
-	} else {
-		parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromNodeExporter()...)
-
-	}
+	// if resultsScrapedFrom == "cAdvisor" {
+	// 	parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromCAdvisor()...)
+	// } else {
+	// 	parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromNodeExporter()...)
+	// }
 	return &parsedMetrics, nil
 }
 
