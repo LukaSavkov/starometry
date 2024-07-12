@@ -36,6 +36,8 @@ func (ns NatsService) InitializeMetricsSubscriber() {
 	subject := fmt.Sprintf("%s.metrics", ns.metricsService.NodeID)
 	ns.natsConnection.Subscribe(subject, func(msg *nats.Msg) {
 		log.Println("NATS REQUEST START")
+		mp := ns.natsConnection.MaxPayload()
+		log.Printf("Maximum payload is %v bytes", mp)
 		writtenMetrics, err := ns.metricsService.GetLatestMetrics()
 		log.Println("NATS REQUEST FINISH GET METRICS")
 		if err != nil {
