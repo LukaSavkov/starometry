@@ -152,7 +152,7 @@ func (ms *MetricsService) castResultsFromBytesToActualValue(readedBytes []byte, 
 	for _, mf := range metrics {
 		for _, m := range mf.Metric {
 			// if _, exists := (*ms.QueryMetricsConfig.GetQueries())[*mf.Name]; exists {
-			if m.Histogram == nil {
+			if m.Histogram == nil && m.Untyped == nil {
 				metric := ms.createMetricData(*mf.Name, m)
 				parsedMetrics = append(parsedMetrics, metric)
 				ms.UsageMetrics.UpdateUsageMetrics(metric)
