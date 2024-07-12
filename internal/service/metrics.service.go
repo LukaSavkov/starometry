@@ -177,9 +177,9 @@ func (ms *MetricsService) createMetricData(metricName string, m *dto.Metric) mod
 	}
 	metric.Timestamp = time.Now().Unix()
 	for _, label := range m.Label {
-		if *label.Value == "" {
-			continue
-		}
+		// if *label.Value == "" {
+		// 	continue
+		// }
 		metric.Labels[*label.Name] = *label.Value
 	}
 	return metric
