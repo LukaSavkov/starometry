@@ -64,10 +64,6 @@ func (m *MetricsService) GetLatestMetrics() (*models.MetricFileFormat, *errors.E
 		log.Println(err)
 	}
 	metrics.ClusterId = string(clusterId)
-	log.Println(m.NodeID)
-	log.Println(clusterId)
-	log.Println(metrics.NodeId)
-	log.Println(metrics.ClusterId)
 	return metrics, nil
 }
 
@@ -156,9 +152,11 @@ func (ms *MetricsService) castResultsFromBytesToActualValue(readedBytes []byte, 
 	for _, mf := range metrics {
 		for _, m := range mf.Metric {
 			// if _, exists := (*ms.QueryMetricsConfig.GetQueries())[*mf.Name]; exists {
-			metric := ms.createMetricData(*mf.Name, m)
-			parsedMetrics = append(parsedMetrics, metric)
-			ms.UsageMetrics.UpdateUsageMetrics(metric)
+			if m.Histogram == nil {
+				metric := ms.createMetricData(*mf.Name, m)
+				parsedMetrics = append(parsedMetrics, metric)
+				ms.UsageMetrics.UpdateUsageMetrics(metric)
+			}
 			// }
 		}
 	}
