@@ -35,7 +35,9 @@ func (ns *NatsService) Disconnect() {
 func (ns NatsService) InitializeMetricsSubscriber() {
 	subject := fmt.Sprintf("%s.metrics", ns.metricsService.NodeID)
 	ns.natsConnection.Subscribe(subject, func(msg *nats.Msg) {
+		log.Println("NATS REQUEST START")
 		writtenMetrics, err := ns.metricsService.GetLatestMetrics()
+		log.Println("NATS REQUEST FINISH GET METRICS")
 		if err != nil {
 			log.Println("ERR IZ METRIKA", err)
 		}
@@ -43,7 +45,9 @@ func (ns NatsService) InitializeMetricsSubscriber() {
 		if errFromCast != nil {
 			log.Println(errFromCast)
 		}
+		log.Println("NATS REQUEST FINISH MARSHAL")
 		msg.Respond([]byte(jsonData))
+		log.Println("NATS REQUEST FINISH")
 	})
 
 }
