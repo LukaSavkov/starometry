@@ -59,13 +59,23 @@ func (m *MetricsService) GetLatestMetrics() (*models.MetricFileFormat, *errors.E
 		metrics.Metrics = append(metrics.Metrics, metricsExternal.Metrics...)
 	}
 	metrics.NodeId = m.NodeID
+	clusterId, err := m.FileService.ReadFromFile("/etc/c12s/clusterid")
+	if err != nil {
+		log.Println(err)
+	}
+	metrics.ClusterId = string(clusterId)
 	return metrics, nil
 }
 
 func (m *MetricsService) WriteMetricsFromExternalApplication(metrics []models.MetricData) *errors.ErrorStruct {
+	clusterId, err := m.FileService.ReadFromFile("/etc/c12s/clusterid")
+	if err != nil {
+		log.Println(err)
+	}
 	fileFormat := &models.MetricFileFormat{
-		Metrics: metrics,
-		NodeId:  m.NodeID,
+		Metrics:   metrics,
+		NodeId:    m.NodeID,
+		ClusterId: string(clusterId),
 	}
 	byteFormatOfMetrics, err := m.formatMetricsIntoByteArray(fileFormat)
 	if err != nil {
@@ -100,9 +110,14 @@ func (m *MetricsService) GetMetrics() *errors.ErrorStruct {
 		return err
 	}
 	mergedSlicesForMetrics := append(*actualMetricsValueFromCAdvisor, *actualMetricsValueFromNodeExporter...)
+	clusterId, err := m.FileService.ReadFromFile("/etc/c12s/clusterid")
+	if err != nil {
+		log.Println(err)
+	}
 	fileFormat := models.MetricFileFormat{
-		NodeId:  m.NodeID,
-		Metrics: mergedSlicesForMetrics,
+		NodeId:    m.NodeID,
+		ClusterId: string(clusterId),
+		Metrics:   mergedSlicesForMetrics,
 	}
 	byteFormatOfMetrics, err := m.formatMetricsIntoByteArray(&fileFormat)
 	if err != nil {
@@ -136,18 +151,19 @@ func (ms *MetricsService) castResultsFromBytesToActualValue(readedBytes []byte, 
 	var parsedMetrics []models.MetricData
 	for _, mf := range metrics {
 		for _, m := range mf.Metric {
-			if _, exists := (*ms.QueryMetricsConfig.GetQueries())[*mf.Name]; exists {
-				metric := ms.createMetricData(*mf.Name, m)
-				parsedMetrics = append(parsedMetrics, metric)
-				ms.UsageMetrics.UpdateUsageMetrics(metric)
-			}
+			// if _, exists := (*ms.QueryMetricsConfig.GetQueries())[*mf.Name]; exists {
+			// if m.Histogram == nil && m.Untyped == nil {
+			metric := ms.createMetricData(*mf.Name, m)
+			parsedMetrics = append(parsedMetrics, metric)
+			ms.UsageMetrics.UpdateUsageMetrics(metric)
+			// }
+			// }
 		}
 	}
 	if resultsScrapedFrom == "cAdvisor" {
 		parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromCAdvisor()...)
 	} else {
 		parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromNodeExporter()...)
-
 	}
 	return &parsedMetrics, nil
 }

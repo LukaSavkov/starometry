@@ -8,6 +8,7 @@ type MetricData struct {
 }
 
 type MetricFileFormat struct {
-	NodeId  string       `json:"nodeId"`
-	Metrics []MetricData `json:"metrics"`
+	NodeId    string       `json:"nodeId"`
+	ClusterId string       `json:"clusterId"`
+	Metrics   []MetricData `json:"metrics"`
 }
