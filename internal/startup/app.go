@@ -80,7 +80,7 @@ func (app *App) init() {
 			if err != nil {
 				continue
 			}
-			metrics = append(metrics, mappers.MapFromExternalMetricDataToModelMetricData(data.Metrics)...)
+			metrics = append(metrics, mappers.MapFromExternalMetricDataToModelMetricData(application.Address, data.Metrics)...)
 		}
 		metricsService.WriteMetricsFromExternalApplication(metrics)
 	})
