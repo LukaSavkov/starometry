@@ -80,7 +80,7 @@ func MapFromModelExternalApplicationToApiExternalApplication(list []models.Exter
 	return result
 }
 
-func MapFromExternalMetricDataToModelMetricData(list []*external.ExternalMetricData) []models.MetricData {
+func MapFromExternalMetricDataToModelMetricData(source string, list []*external.ExternalMetricData) []models.MetricData {
 	var result []models.MetricData
 	for _, apiApp := range list {
 		modelApp := models.MetricData{
@@ -89,6 +89,7 @@ func MapFromExternalMetricDataToModelMetricData(list []*external.ExternalMetricD
 			Value:      apiApp.Value,
 			Timestamp:  apiApp.Timestamp,
 		}
+		modelApp.Labels["app"] = source
 		result = append(result, modelApp)
 	}
 	return result
