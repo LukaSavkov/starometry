@@ -16,11 +16,13 @@ func NewExternalApplicationsConfig() *ExternalApplicationsConfig {
 }
 
 func (eac *ExternalApplicationsConfig) loadNewApplicationWithConfiguration(application models.ExternalApplication) {
-	client, err := client.NewExternalMetricsClient(application.Address)
-	if err != nil {
-		return
+	if application.Interface == "grpc" {
+		client, err := client.NewExternalMetricsClient(application.Address)
+		if err != nil {
+			return
+		}
+		application.ExternalClient = client
 	}
-	application.ExternalClient = client
 	eac.externalApplications = append(eac.externalApplications, application)
 }
 

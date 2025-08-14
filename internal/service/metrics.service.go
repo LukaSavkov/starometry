@@ -96,7 +96,7 @@ func (m *MetricsService) GetMetrics() *errors.ErrorStruct {
 		log.Println("Byte query result from cAdvisor", err.GetErrorMessage())
 		return err
 	}
-	actualMetricsValueFromCAdvisor, err := m.castResultsFromBytesToActualValue(byteQueryResultsFromCAdvisor, "cAdvisor")
+	actualMetricsValueFromCAdvisor, err := m.CastResultsFromBytesToActualValue(byteQueryResultsFromCAdvisor, "cAdvisor")
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (m *MetricsService) GetMetrics() *errors.ErrorStruct {
 		log.Println("Byte query result from cAdvisor", err.GetErrorMessage())
 		return err
 	}
-	actualMetricsValueFromNodeExporter, err := m.castResultsFromBytesToActualValue(byteQueryResultsFromNodeExporter, "node-exporter")
+	actualMetricsValueFromNodeExporter, err := m.CastResultsFromBytesToActualValue(byteQueryResultsFromNodeExporter, "node-exporter")
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func (m *MetricsService) formatMetricsIntoByteArray(fileFormat *models.MetricFil
 	return jsonFileFormat, nil
 }
 
-func (ms *MetricsService) castResultsFromBytesToActualValue(readedBytes []byte, resultsScrapedFrom string) (*[]models.MetricData, *errors.ErrorStruct) {
+func (ms *MetricsService) CastResultsFromBytesToActualValue(readedBytes []byte, resultsScrapedFrom string) (*[]models.MetricData, *errors.ErrorStruct) {
 	data := string(readedBytes)
 
 	parser := expfmt.TextParser{}
@@ -162,7 +162,7 @@ func (ms *MetricsService) castResultsFromBytesToActualValue(readedBytes []byte, 
 	}
 	if resultsScrapedFrom == "cAdvisor" {
 		parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromCAdvisor()...)
-	} else {
+	} else if resultsScrapedFrom == "node-exporter" {
 		parsedMetrics = append(parsedMetrics, ms.UsageMetrics.GetCustomMetricDataFromNodeExporter()...)
 	}
 	return &parsedMetrics, nil
