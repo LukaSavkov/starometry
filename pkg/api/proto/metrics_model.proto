@@ -22,6 +22,7 @@ message NewMetricsArray {
 
 message ExternalApplication {
     string address = 1;
+    string interface = 2;
   }
   
   message ExternalApplicationsList {

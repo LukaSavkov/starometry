@@ -62,7 +62,8 @@ func MapFromApiExternalApplicationToModelExternalApplication(list []*api.Externa
 	var result []models.ExternalApplication
 	for _, apiApp := range list {
 		modelApp := models.ExternalApplication{
-			Address: apiApp.Address,
+			Address:   apiApp.Address,
+			Interface: apiApp.Interface,
 		}
 		result = append(result, modelApp)
 	}
@@ -74,6 +75,7 @@ func MapFromModelExternalApplicationToApiExternalApplication(list []models.Exter
 	for _, modelApp := range list {
 		apiApp := &api.ExternalApplication{
 			Address: modelApp.Address,
+			Interface: modelApp.Interface,
 		}
 		result = append(result, apiApp)
 	}

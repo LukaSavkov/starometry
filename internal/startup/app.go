@@ -76,11 +76,27 @@ func (app *App) init() {
 		}
 		var metrics []models.MetricData
 		for _, application := range *applicationsListtWithClients {
-			data, err := application.ExternalClient.ExternalLatestMetrics(context.Background(), &external.ExternalLatestMetricsReq{})
-			if err != nil {
-				continue
+			if application.Interface == "grpc" {
+				data, err := application.ExternalClient.ExternalLatestMetrics(context.Background(), &external.ExternalLatestMetricsReq{})
+				if err != nil {
+					continue
+				}
+				metrics = append(metrics, mappers.MapFromExternalMetricDataToModelMetricData(application.Address, data.Metrics)...)
+			} else if application.Interface == "prom" {
+				byteQueryResults, err := metricsService.SendExternalGetRequestToMetricsEndpoint(application.Address)
+				if err != nil {
+					log.Println("Byte query result from cAdvisor", err.GetErrorMessage())
+				}
+				actualMetricsValue, err := metricsService.CastResultsFromBytesToActualValue(byteQueryResults, "app")
+				if err != nil {
+					log.Println(err)
+				} else {
+					for _, m := range *actualMetricsValue {
+						m.Labels["app"] = application.Address
+					}
+					metrics = append(metrics, *actualMetricsValue...)
+				}
 			}
-			metrics = append(metrics, mappers.MapFromExternalMetricDataToModelMetricData(application.Address, data.Metrics)...)
 		}
 		metricsService.WriteMetricsFromExternalApplication(metrics)
 	})
